@@ -1,6 +1,10 @@
 package com.huiyi.web.dto.entity;
 
-public class ProcessInstanceDto {
+import java.io.Serializable;
+
+public class ProcessInstanceDto implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String processInstanceId;
     private String businessKey;

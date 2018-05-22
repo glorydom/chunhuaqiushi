@@ -2,6 +2,7 @@ package com.huiyi.web.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huiyi.web.dto.BaseResult;
+import com.huiyi.web.dto.Constants;
 import com.huiyi.web.dto.entity.DeployedProcess;
 import jdk.nashorn.internal.ir.ObjectNode;
 import org.activiti.bpmn.converter.BpmnXMLConverter;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Controller
+@RequestMapping("/deploy")
 public class DeploymentController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DeploymentController.class);
@@ -52,7 +54,7 @@ public class DeploymentController {
 //    }
 
 
-    @RequestMapping(value = "/listDeployedProcess", method = RequestMethod.GET)
+    @RequestMapping(value = "listDeployedProcess", method = RequestMethod.GET)
     @ResponseBody
     public BaseResult listAllDeployedProcess(){
         List<ProcessDefinition> list = repositoryService//与流程定义和部署对象相关的Service
@@ -84,12 +86,14 @@ public class DeploymentController {
                 System.out.println("################################");
                 DeployedProcess dp = new DeployedProcess();
                 dp.setProcessKey(processDefinition.getKey());
+                dp.setId(processDefinition.getId());
+                dp.setVersion(processDefinition.getVersion());
                 result.add(dp);
             }
         }
 
 
-        return new BaseResult(1, "success", result);
+        return new BaseResult(Constants.SUCCESS, "success", result);
     }
 
 }
