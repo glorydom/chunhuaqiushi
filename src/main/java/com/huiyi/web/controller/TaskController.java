@@ -6,11 +6,9 @@ import com.huiyi.web.dto.BaseResult;
 import com.huiyi.web.dto.Constants;
 import com.huiyi.web.dto.entity.TaskCompleteDto;
 import com.huiyi.web.dto.entity.TaskDto;
-import org.activiti.engine.HistoryService;
-import org.activiti.engine.RepositoryService;
-import org.activiti.engine.RuntimeService;
-import org.activiti.engine.TaskService;
+import org.activiti.engine.*;
 import org.activiti.engine.history.HistoricTaskInstance;
+import org.activiti.engine.identity.Group;
 import org.activiti.engine.impl.identity.Authentication;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.activiti.engine.impl.pvm.PvmTransition;
@@ -32,6 +30,9 @@ public class TaskController {
     private HistoryService historyService;
 
     @Autowired
+    private IdentityService identityService;
+
+    @Autowired
     private TaskService taskService;
 
     @Autowired
@@ -49,6 +50,70 @@ public class TaskController {
             tds.add(convertToTaskDto(task));
         }
 
+        return new BaseResult(Constants.SUCCESS, "success", tds);
+    }
+
+    /**
+     * 根据用户id，将该用户所在的组的所有任务读取出来
+     * @param userId
+     * @return
+     */
+    @RequestMapping(value = "list/group/{userId}", method = RequestMethod.GET)
+    @ResponseBody
+    public BaseResult listMyGroupTasks(@PathVariable String userId) {
+//        List<Group> groups = identityService.createGroupQuery().groupId(userId).list();
+        String sql = "select g.* FROM\n" +
+                "ACT_ID_GROUP g join ACT_ID_MEMBERSHIP m\n" +
+                "on g.ID_ = m.GROUP_ID_\n" +
+                "join ACT_ID_USER u\n" +
+                "on m.USER_ID_ = u.ID_\n" +
+                "where u.ID_= '" + userId + "'";
+        List<Group> groups  = identityService.createNativeGroupQuery().sql(sql).list();
+        List<Task> tasks = new ArrayList<>();
+        for(Group g:groups){
+            List<Task> groupedTasks = taskService.createTaskQuery().taskCandidateGroup(g.getId()).list();
+            tasks.addAll(groupedTasks);
+        }
+
+        List<TaskDto> tds = new ArrayList<>();
+        for (Task task : tasks) {
+            tds.add(convertToTaskDto(task));
+        }
+
+        return new BaseResult(Constants.SUCCESS, "success", tds);
+    }
+
+    /**
+     * 获取该用户拥有的任务
+     * @param userId
+     * @return
+     */
+    @RequestMapping(value = "list/owner/{userId}", method = RequestMethod.GET)
+    @ResponseBody
+    public BaseResult listMyOwnerTasks(@PathVariable String userId) {
+        List<Task> tasks = taskService.createTaskQuery().taskOwner(userId).list();
+        List<TaskDto> tds = new ArrayList<>();
+        for (Task task : tasks) {
+            tds.add(convertToTaskDto(task));
+        }
+
+        return new BaseResult(Constants.SUCCESS, "success", tds);
+    }
+
+
+    /**
+     * 根据用户id获取分配给该用户的任务
+     * @param userId
+     * @return
+     */
+    @RequestMapping(value = "list/user/{userId}", method = RequestMethod.GET)
+    @ResponseBody
+    public BaseResult listMyTasks(@PathVariable String userId) {
+        List<Task> tasks = taskService.createTaskQuery().taskAssignee(userId).list();
+        List<TaskDto> tds = new ArrayList<>();
+        for (Task task : tasks) {
+            tds.add(convertToTaskDto(task));
+        }
         return new BaseResult(Constants.SUCCESS, "success", tds);
     }
 
@@ -97,6 +162,21 @@ public class TaskController {
 
         taskService.claim(taskid, userid);
 
+        return new BaseResult(Constants.SUCCESS, "success", null);
+    }
+
+    /**
+     * 拥有任务，转发给其他人
+     * @param userid
+     * @param taskid
+     * @return
+     */
+    @RequestMapping(value = "own/{userid}/{taskid}/{assigneeId}", method = RequestMethod.GET)
+    @ResponseBody
+    public BaseResult ownTask(@PathVariable String userid, @PathVariable String taskid, String asignee){
+        taskService.setOwner(taskid, userid);
+        if(asignee != null)
+            taskService.setAssignee(taskid, asignee);
         return new BaseResult(Constants.SUCCESS, "success", null);
     }
 
