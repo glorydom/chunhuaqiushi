@@ -83,4 +83,7 @@ public class TaskDto implements Serializable {
     public void setTaskId(String taskId) {
         this.taskId = taskId;
     }
+
+    public TaskDto() {
+    }
 }
