@@ -61,7 +61,7 @@ public class TaskController {
     @RequestMapping(value = "list/group/{userId}", method = RequestMethod.GET)
     @ResponseBody
     public BaseResult listMyGroupTasks(@PathVariable String userId) {
-//        List<Group> groups = identityService.createGroupQuery().groupId(userId).list();
+        System.out.println("the userId is:  " + userId);
         String sql = "select g.* FROM\n" +
                 "ACT_ID_GROUP g join ACT_ID_MEMBERSHIP m\n" +
                 "on g.ID_ = m.GROUP_ID_\n" +

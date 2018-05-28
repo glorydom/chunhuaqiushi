@@ -17,7 +17,7 @@
         <property name="deploymentResources"
                   >
             <list>
-                <value>classpath*:/workflow/*.xml</value>
+                <value>classpath*:/workflow/*.bpmn</value>
             </list>
         </property>
 
