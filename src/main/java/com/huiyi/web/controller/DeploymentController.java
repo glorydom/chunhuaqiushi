@@ -81,7 +81,7 @@ public class DeploymentController {
             for(FlowElement e : flowElements) {
                 System.out.println("flowelement id:" + e.getId() + "  name:" + e.getName() + "   class:" + e.getClass().toString());
                 if(e.getClass().getSimpleName().endsWith("UserTask")){ //仅仅读取用户任务
-
+                	System.out.println("-----");
                     taskNames.add(e.getName());
                 }
             }
