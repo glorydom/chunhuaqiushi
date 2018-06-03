@@ -7,6 +7,7 @@ import com.huiyi.web.dto.entity.DeployedProcess;
 import jdk.nashorn.internal.ir.ObjectNode;
 import org.activiti.bpmn.converter.BpmnXMLConverter;
 import org.activiti.bpmn.model.BpmnModel;
+import org.activiti.bpmn.model.FlowElement;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.impl.util.json.JSONObject;
 import org.activiti.engine.repository.Deployment;
@@ -17,12 +18,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Controller
@@ -52,6 +51,44 @@ public class DeploymentController {
 //
 //
 //    }
+
+    @RequestMapping(value = "definitions/userTask/list/{process_key}", method = RequestMethod.GET)
+    @ResponseBody
+    public BaseResult listAllUserTasks(@PathVariable String process_key){
+
+        List<ProcessDefinition> list = repositoryService//与流程定义和部署对象相关的Service
+                .createProcessDefinitionQuery()//创建一个流程定义查询
+                        /*指定查询条件,where条件*/
+                .processDefinitionKey(process_key)
+//                .deploymentId(process_key)//使用部署对象ID查询
+                //.processDefinitionId(processDefinitionId)//使用流程定义ID查询
+                //.processDefinitionKey(processDefinitionKey)//使用流程定义的KEY查询
+                //.processDefinitionNameLike(processDefinitionNameLike)//使用流程定义的名称模糊查询
+
+                        /*排序*/
+                .orderByProcessDefinitionVersion().desc()//按照版本的升序排列
+                //.orderByProcessDefinitionName().desc()//按照流程定义的名称降序排列
+                .list();//返回一个集合列表，封装流程定义
+        if(list == null || list.size()==0){
+            return new BaseResult(Constants.ERROR, "not found", null);
+        }
+
+        String latest_process_id = list.get(0).getId();
+        BpmnModel model = repositoryService.getBpmnModel(latest_process_id);
+        List<String> taskNames = new ArrayList<>();
+        if(model != null) {
+            Collection<FlowElement> flowElements = model.getMainProcess().getFlowElements();
+            for(FlowElement e : flowElements) {
+                System.out.println("flowelement id:" + e.getId() + "  name:" + e.getName() + "   class:" + e.getClass().toString());
+                if(e.getClass().getSimpleName().endsWith("UserTask")){ //仅仅读取用户任务
+
+                    taskNames.add(e.getName());
+                }
+            }
+        }
+
+        return new BaseResult(Constants.SUCCESS, "get all tasknames", taskNames);
+    }
 
 
     @RequestMapping(value = "listDeployedProcess", method = RequestMethod.GET)
